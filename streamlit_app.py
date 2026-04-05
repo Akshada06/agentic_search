@@ -6,7 +6,12 @@ import requests
 import streamlit as st
 import streamlit.components.v1 as components
 
-API_URL = "http://127.0.0.1:8000/search"
+API_URL = os.getenv("API_URL")
+if not API_URL:
+    raise ValueError(
+        "API_URL environment variable not set. "
+        "Set it to your deployed FastAPI backend URL."
+    )
 DEFAULT_MAX_ENTITIES = 8
 DEFAULT_ENTITY_HINT = None
 
