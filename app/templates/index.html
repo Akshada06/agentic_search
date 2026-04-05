@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Agentic Search Challenge</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f7fb;
+        --panel: #ffffff;
+        --border: #d9e1ec;
+        --text: #172033;
+        --muted: #5b6578;
+        --accent: #1d4ed8;
+        --accent-soft: #dbeafe;
+        --danger: #b91c1c;
+        --success: #166534;
+        --shadow: 0 12px 30px rgba(23, 32, 51, 0.08);
+      }
+
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        background: linear-gradient(180deg, #eef4ff 0%, var(--bg) 180px);
+        color: var(--text);
+      }
+
+      a {
+        color: var(--accent);
+      }
+
+      .page {
+        max-width: 1240px;
+        margin: 0 auto;
+        padding: 32px 20px 56px;
+      }
+
+      .hero {
+        display: grid;
+        gap: 14px;
+        margin-bottom: 24px;
+      }
+
+      .badge {
+        width: fit-content;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: var(--accent-soft);
+        color: var(--accent);
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: clamp(32px, 5vw, 48px);
+        line-height: 1.05;
+      }
+
+      .hero p {
+        margin: 0;
+        max-width: 900px;
+        color: var(--muted);
+        font-size: 17px;
+        line-height: 1.6;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: minmax(300px, 380px) minmax(0, 1fr);
+        gap: 20px;
+        align-items: start;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        box-shadow: var(--shadow);
+      }
+
+      .controls {
+        padding: 20px;
+        position: sticky;
+        top: 20px;
+      }
+
+      .controls h2,
+      .results-header h2,
+      .section h3 {
+        margin: 0 0 8px;
+      }
+
+      .controls p,
+      .results-header p,
+      .empty-state p,
+      .section p,
+      .hint,
+      .meta-line,
+      .helper-list li {
+        color: var(--muted);
+      }
+
+      label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        margin: 16px 0 8px;
+      }
+
+      input,
+      select,
+      textarea,
+      button {
+        font: inherit;
+      }
+
+      input,
+      textarea {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+      }
+
+      textarea {
+        min-height: 110px;
+        resize: vertical;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .actions,
+      .toolbar,
+      .sample-grid {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .actions {
+        margin-top: 18px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 14px;
+        padding: 12px 16px;
+        cursor: pointer;
+        font-weight: 700;
+      }
+
+      .primary {
+        background: var(--accent);
+        color: white;
+        flex: 1;
+      }
+
+      .secondary,
+      .chip-button,
+      .ghost {
+        background: #eef2ff;
+        color: #334155;
+      }
+
+      .ghost {
+        border: 1px solid var(--border);
+        background: #fff;
+      }
+
+      .chip-button {
+        text-align: left;
+        padding: 10px 12px;
+        border: 1px solid #dbeafe;
+        border-radius: 12px;
+        font-weight: 600;
+      }
+
+      .primary:disabled {
+        opacity: 0.75;
+        cursor: wait;
+      }
+
+      .results {
+        padding: 20px;
+        display: grid;
+        gap: 18px;
+      }
+
+      .results-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 12px;
+      }
+
+      .pill-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .pill {
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        color: #334155;
+        font-size: 13px;
+      }
+
+      .section {
+        border-top: 1px solid var(--border);
+        padding-top: 16px;
+      }
+
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--border);
+        border-radius: 16px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 760px;
+      }
+
+      th, td {
+        text-align: left;
+        vertical-align: top;
+        padding: 14px;
+        border-bottom: 1px solid var(--border);
+      }
+
+      th {
+        background: #f8fafc;
+        font-size: 14px;
+      }
+
+      td {
+        font-size: 14px;
+        line-height: 1.45;
+      }
+
+      tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .cell-value {
+        font-weight: 600;
+        margin-bottom: 8px;
+        word-break: break-word;
+      }
+
+      details {
+        background: #f8fafc;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+      }
+
+      summary {
+        cursor: pointer;
+        font-weight: 600;
+        color: var(--accent);
+      }
+
+      .source-card {
+        margin-top: 10px;
+        display: grid;
+        gap: 6px;
+      }
+
+      .source-card a,
+      .source-item a,
+      .pill a {
+        color: var(--accent);
+        word-break: break-word;
+      }
+
+      .sources-list,
+      .helper-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .source-item {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 14px;
+      }
+
+      .error,
+      .toast {
+        border-radius: 14px;
+        padding: 14px;
+        display: none;
+      }
+
+      .error {
+        border: 1px solid #fecaca;
+        background: #fef2f2;
+        color: var(--danger);
+      }
+
+      .toast {
+        border: 1px solid #bbf7d0;
+        background: #f0fdf4;
+        color: var(--success);
+      }
+
+      .empty-state {
+        border: 1px dashed var(--border);
+        border-radius: 18px;
+        padding: 26px;
+        background: linear-gradient(180deg, #ffffff, #fafcff);
+      }
+
+      .helper-list {
+        padding-left: 18px;
+        margin: 14px 0 0;
+      }
+
+      pre {
+        margin: 0;
+        padding: 16px;
+        background: #0f172a;
+        color: #e2e8f0;
+        border-radius: 16px;
+        overflow-x: auto;
+        font-size: 13px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+
+      @media (max-width: 960px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+
+        .controls {
+          position: static;
+        }
+
+        .row,
+        .results-header {
+          grid-template-columns: 1fr;
+          display: grid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero">
+        <div class="badge">Agentic Search Demo</div>
+        <h1>Search the web and turn messy results into a source-traceable table</h1>
+        <p>
+          Enter a topic like <strong>AI startups in healthcare</strong>, <strong>top pizza places in Brooklyn</strong>, or
+          <strong>open source database tools</strong>. The app searches Brave, scrapes pages, extracts entities with OpenAI,
+          and shows each cell with provenance.
+        </p>
+      </section>
+
+      <section class="grid">
+        <aside class="panel controls">
+          <h2>Run a query</h2>
+          <p>Everything is fetched live. No example data is hardcoded into the result table.</p>
+
+          <form id="search-form">
+            <label for="query">Topic query</label>
+            <textarea id="query" name="query" placeholder="AI startups in healthcare">AI startups in healthcare</textarea>
+
+            <div class="row">
+              <div>
+                <label for="max_entities">Max entities</label>
+                <input id="max_entities" name="max_entities" type="number" min="1" max="30" value="8" />
+              </div>
+              <div>
+                <label for="entity_type_hint">Entity hint</label>
+                <input id="entity_type_hint" name="entity_type_hint" type="text" placeholder="company" value="company" />
+              </div>
+            </div>
+
+            <label>Quick examples</label>
+            <div class="sample-grid">
+              <button class="chip-button" type="button" data-query="AI startups in healthcare" data-hint="company">Healthcare AI startups</button>
+              <button class="chip-button" type="button" data-query="top pizza places in Brooklyn" data-hint="restaurant">Brooklyn pizza spots</button>
+              <button class="chip-button" type="button" data-query="open source database tools" data-hint="tool">Open-source DB tools</button>
+            </div>
+
+            <div class="actions">
+              <button id="submit-button" class="primary" type="submit">Run search</button>
+              <button id="reset-button" class="secondary" type="button">Reset</button>
+            </div>
+            <p class="hint">Tip: open <a href="/docs">/docs</a> if you also want to test the raw API.</p>
+          </form>
+        </aside>
+
+        <section class="panel results">
+          <div class="results-header">
+            <div>
+              <h2>Results</h2>
+              <p id="status-text">Ready. Submit a topic to generate a structured table.</p>
+            </div>
+            <div class="pill-row" id="summary-pills"></div>
+          </div>
+
+          <div class="toolbar">
+            <button id="copy-json-button" class="ghost" type="button">Copy JSON</button>
+            <button id="download-csv-button" class="ghost" type="button">Download CSV</button>
+          </div>
+
+          <div id="toast-box" class="toast"></div>
+          <div id="error-box" class="error"></div>
+
+          <div id="results-content" class="empty-state">
+            <h3>What you’ll see</h3>
+            <p>
+              A rendered entity table, inferred columns, a list of scraped URLs, the underlying search results, and the raw
+              JSON returned by the API.
+            </p>
+            <ul class="helper-list">
+              <li>Every field can show its source URL and evidence snippet.</li>
+              <li>You can copy the raw JSON or export the table as CSV.</li>
+              <li>The frontend uses the same backend endpoint the judges can inspect at <code>/docs</code>.</li>
+            </ul>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById("search-form");
+      const submitButton = document.getElementById("submit-button");
+      const resetButton = document.getElementById("reset-button");
+      const copyJsonButton = document.getElementById("copy-json-button");
+      const downloadCsvButton = document.getElementById("download-csv-button");
+      const statusText = document.getElementById("status-text");
+      const resultsContent = document.getElementById("results-content");
+      const errorBox = document.getElementById("error-box");
+      const toastBox = document.getElementById("toast-box");
+      const summaryPills = document.getElementById("summary-pills");
+      const sampleButtons = document.querySelectorAll("[data-query]");
+      let lastResponse = null;
+
+      function escapeHtml(value) {
+        return String(value ?? "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
+      function formatValue(value) {
+        if (value === null || value === undefined || value === "") return "—";
+        if (typeof value === "object") return escapeHtml(JSON.stringify(value));
+        return escapeHtml(value);
+      }
+
+      function csvEscape(value) {
+        const normalized = value === null || value === undefined ? "" : String(value);
+        return `"${normalized.replaceAll('"', '""')}"`;
+      }
+
+      function buildCsv(data) {
+        const columns = ["entity", ...(data.inferred_columns || [])];
+        const rows = (data.entities || []).map((entity) => (
+          columns.map((column) => column === "entity" ? entity.entity : entity.attributes?.[column] ?? "")
+        ));
+        const allRows = [columns, ...rows];
+        return allRows.map((row) => row.map(csvEscape).join(",")).join("\n");
+      }
+
+      function downloadTextFile(filename, content, contentType) {
+        const blob = new Blob([content], { type: contentType });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = filename;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      function showToast(message) {
+        toastBox.style.display = "block";
+        toastBox.textContent = message;
+        window.clearTimeout(showToast.timeoutId);
+        showToast.timeoutId = window.setTimeout(() => {
+          toastBox.style.display = "none";
+          toastBox.textContent = "";
+        }, 2400);
+      }
+
+      function buildTable(data) {
+        const columns = ["entity", ...(data.inferred_columns || [])];
+        const headerHtml = columns.map((column) => `<th>${escapeHtml(column)}</th>`).join("");
+
+        const rowHtml = (data.entities || []).map((row) => {
+          const cells = columns.map((column) => {
+            const value = column === "entity" ? row.entity : row.attributes?.[column];
+            const source = row.cell_sources?.[column];
+            const sourceHtml = source
+              ? `
+                <details>
+                  <summary>View source</summary>
+                  <div class="source-card">
+                    <div><strong>Source title:</strong> ${escapeHtml(source.source_title || "Unknown source")}</div>
+                    <div><strong>Source URL:</strong> <a href="${escapeHtml(source.source_url)}" target="_blank" rel="noreferrer">${escapeHtml(source.source_url)}</a></div>
+                    <div><strong>Evidence:</strong> ${escapeHtml(source.evidence || "No evidence snippet available")}</div>
+                  </div>
+                </details>
+              `
+              : `<div class="meta-line">No provenance returned for this field.</div>`;
+
+            return `
+              <td>
+                <div class="cell-value">${formatValue(value)}</div>
+                ${sourceHtml}
+              </td>
+            `;
+          }).join("");
+
+          return `<tr>${cells}</tr>`;
+        }).join("");
+
+        return `
+          <div class="section">
+            <h3>Structured entity table</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr>${headerHtml}</tr></thead>
+                <tbody>${rowHtml || `<tr><td colspan="${columns.length}">No entities found.</td></tr>`}</tbody>
+              </table>
+            </div>
+          </div>
+        `;
+      }
+
+      function buildSearchResults(searchResults) {
+        const items = (searchResults || []).map((item) => `
+          <div class="source-item">
+            <div><a href="${escapeHtml(item.url)}" target="_blank" rel="noreferrer">${escapeHtml(item.title)}</a></div>
+            <div class="meta-line">${escapeHtml(item.url)}</div>
+            <p>${escapeHtml(item.description || "")}</p>
+          </div>
+        `).join("");
+
+        return `
+          <div class="section">
+            <h3>Search results used</h3>
+            <div class="sources-list">${items || `<div class="meta-line">No search results captured.</div>`}</div>
+          </div>
+        `;
+      }
+
+      function buildScrapedUrls(scrapedUrls) {
+        const items = (scrapedUrls || []).map((url) => `<div class="pill"><a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">${escapeHtml(url)}</a></div>`).join("");
+        return `
+          <div class="section">
+            <h3>Scraped URLs</h3>
+            <div class="pill-row">${items || `<div class="meta-line">No pages were scraped.</div>`}</div>
+          </div>
+        `;
+      }
+
+      function buildJson(data) {
+        return `
+          <div class="section">
+            <h3>Raw JSON response</h3>
+            <pre>${escapeHtml(JSON.stringify(data, null, 2))}</pre>
+          </div>
+        `;
+      }
+
+      function render(data) {
+        lastResponse = data;
+        summaryPills.innerHTML = `
+          <div class="pill">${escapeHtml((data.entities || []).length)} entities</div>
+          <div class="pill">${escapeHtml((data.inferred_columns || []).length)} inferred columns</div>
+          <div class="pill">${escapeHtml((data.scraped_urls || []).length)} scraped pages</div>
+        `;
+
+        resultsContent.className = "";
+        resultsContent.innerHTML = `
+          <div class="meta-line"><strong>Query:</strong> ${escapeHtml(data.query)}</div>
+          ${data.inferred_columns?.length ? `<div class="pill-row">${data.inferred_columns.map((col) => `<div class="pill">${escapeHtml(col)}</div>`).join("")}</div>` : ""}
+          ${buildTable(data)}
+          ${buildScrapedUrls(data.scraped_urls)}
+          ${buildSearchResults(data.search_results)}
+          ${buildJson(data)}
+        `;
+      }
+
+      function setLoading(isLoading) {
+        submitButton.disabled = isLoading;
+        submitButton.textContent = isLoading ? "Running..." : "Run search";
+        statusText.textContent = isLoading
+          ? "Searching Brave, scraping pages, and extracting entities..."
+          : "Ready. Submit a topic to generate a structured table.";
+      }
+
+      function showError(message) {
+        errorBox.style.display = "block";
+        errorBox.textContent = message;
+      }
+
+      function clearError() {
+        errorBox.style.display = "none";
+        errorBox.textContent = "";
+      }
+
+      function resetForm() {
+        document.getElementById("query").value = "AI startups in healthcare";
+        document.getElementById("max_entities").value = 8;
+        document.getElementById("entity_type_hint").value = "company";
+      }
+
+      sampleButtons.forEach((button) => {
+        button.addEventListener("click", () => {
+          document.getElementById("query").value = button.dataset.query || "";
+          document.getElementById("entity_type_hint").value = button.dataset.hint || "";
+          document.getElementById("max_entities").value = 8;
+        });
+      });
+
+      resetButton.addEventListener("click", () => {
+        resetForm();
+        clearError();
+        showToast("Form reset.");
+      });
+
+      copyJsonButton.addEventListener("click", async () => {
+        if (!lastResponse) {
+          showError("Run a search first so there is JSON to copy.");
+          return;
+        }
+        clearError();
+        await navigator.clipboard.writeText(JSON.stringify(lastResponse, null, 2));
+        showToast("JSON copied to clipboard.");
+      });
+
+      downloadCsvButton.addEventListener("click", () => {
+        if (!lastResponse) {
+          showError("Run a search first so there is a table to export.");
+          return;
+        }
+        clearError();
+        const filename = `${(lastResponse.query || "results").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "results"}.csv`;
+        downloadTextFile(filename, buildCsv(lastResponse), "text/csv;charset=utf-8");
+        showToast("CSV downloaded.");
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearError();
+        setLoading(true);
+
+        const payload = {
+          query: document.getElementById("query").value.trim(),
+          max_entities: Number(document.getElementById("max_entities").value || 8),
+          entity_type_hint: document.getElementById("entity_type_hint").value.trim() || null,
+        };
+
+        try {
+          const response = await fetch("/search", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.detail || "The request failed.");
+          }
+
+          statusText.textContent = `Done. Generated ${(data.entities || []).length} entities for “${data.query}”.`;
+          render(data);
+        } catch (error) {
+          lastResponse = null;
+          summaryPills.innerHTML = "";
+          resultsContent.className = "empty-state";
+          resultsContent.innerHTML = `
+            <h3>Request failed</h3>
+            <p>The backend returned an error. Check your API keys and terminal logs, then try again.</p>
+          `;
+          showError(error.message || "Something went wrong.");
+        } finally {
+          setLoading(false);
+        }
+      });
+    </script>
+  </body>
+</html>
