@@ -1,6 +1,6 @@
 # agentic_search
 
-A small but production-minded agentic search system that turns an open-ended topic query into a structured, source-traceable entity table. It now includes a lightweight frontend for interactive querying, table inspection, CSV export, and raw JSON copy.
+A small but production-minded agentic search system that turns an open-ended topic query into a structured entity table with traceable sources. It now includes a lightweight frontend for interactive querying, table inspection, CSV export, and raw JSON copy.
 
 Example input:
 - `AI startups in healthcare`
@@ -9,44 +9,56 @@ Example input:
 
 Example output:
 - A JSON API response
-- A simple browser UI at `/`
+- Interactive browser UI
 - Flexible inferred columns based on the topic
-- Per-cell provenance so every value can be traced to a source URL and evidence snippet
+- Per-cell provenance with source URL and evidence snippet
 
----
+
+## Live URLs
+
+- **Backend API:** [https://agentic-search-eexc.onrender.com](https://agentic-search-eexc.onrender.com)  
+- **Streamlit frontend:** [https://agentic-search-frontend.onrender.com](https://agentic-search-frontend.onrender.com)
 
 
 ## Frontend
 
-A simple frontend is included at `app/templates/index.html` and served from `/`.
+The project includes **two ways to interact with it**:
 
-It gives you:
-- a query form for topic, max entities, and optional entity hint
-- one-click sample queries
-- a rendered structured table
-- expandable per-cell provenance
-- raw JSON inspection
-- CSV export for the table
+1. **FastAPI HTML frontend** – served from `/` on the backend:
+   - Query form for topic, max entities, and optional entity hint
+   - Rendered structured table with expandable per-cell provenance
+   - Raw JSON inspection
+   - CSV export
 
-This is useful in the submission because reviewers can test the backend from `/docs` and also quickly see a polished demo from the homepage.
+2. **Streamlit frontend** – lightweight interactive UI:
+   - Run the backend first
+   - Then start Streamlit with:
+     ```bash
+     streamlit run streamlit_app.py
+     ```
+   - Open: `http://127.0.0.1:8501/` (Streamlit UI)
+   - FastAPI backend HTML demo remains at `http://127.0.0.1:8000/`  
+   - API docs: `http://127.0.0.1:8000/docs`
+
+> **Note:** Streamlit app uses the environment variable `API_URL` to connect to your deployed backend:
+> ```env
+> API_URL=https://agentic-search-eexc.onrender.com/search
+> ```
+
 
 ## Why this approach
 
-The challenge is not just “search + summarize.” The hard part is turning a fuzzy topic into a useful entity table while keeping each cell explainable.
+The challenge is not just “search + summarize.” The goal is turning a fuzzy topic into a useful, structured entity table while keeping every cell traceable.
 
-I designed the pipeline around four stages:
+**Pipeline stages:**
 
-1. **Search** with Brave Search API to gather a diverse result set.
-2. **Scrape** result pages and extract readable article/page text.
-3. **Extract** entities and attributes with OpenAI.
-4. **Ground** every returned field in a source snippet.
+1. **Search** – Brave Search API gathers diverse results  
+2. **Scrape** – Fetch pages asynchronously and extract readable text  
+3. **Extract** – OpenAI generates entities, attributes, and inferred columns  
+4. **Ground** – Each returned field is linked to a source snippet  
 
-This gives a practical balance of:
-- decent recall from search,
-- better precision from LLM-based extraction,
-- and trust via source-traceable cells.
+This approach balances recall, precision and traceability.
 
----
 
 ## Architecture
 
@@ -62,7 +74,7 @@ Async scraping + readability extraction
 OpenAI extraction pass
    ↓
 Structured entities + inferred columns + per-cell provenance
-```
+
 
 ### Components
 
@@ -78,6 +90,10 @@ Structured entities + inferred columns + per-cell provenance
   - Orchestrates the full workflow
 - `app/main.py`
   - FastAPI entrypoint
+- `app/templates/index.html` 
+  – simple HTML frontend
+- `streamlit_app.py`
+  – lightweight Streamlit UI
 
 ---
 
@@ -129,7 +145,7 @@ Response shape:
 }
 ```
 
-Each cell is explainable because `cell_sources` stores the source URL, source title, and evidence snippet for that field.
+Each cell is explainable because `cell_sources` stores the source URL, source title and evidence snippet for that field.
 
 ---
 
@@ -138,7 +154,7 @@ Each cell is explainable because `cell_sources` stores the source URL, source ti
 ### 1. Clone
 
 ```bash
-git clone https://github.com/yourname/agentic_search.git
+git clone https://github.com/Akshada06/agentic_search.git
 cd agentic_search
 ```
 
@@ -156,15 +172,20 @@ BRAVE_API_KEY=...
 OPENAI_MODEL=gpt-4.1-mini
 ```
 
+Make sure to use your actual API keys; the app will not run without them.
+
 ### 3. Install dependencies
+
+Create and activate a Python virtual environment, then install packages:
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
+pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-### 4. Run locally
+### 4. Run the backend locally
 
 ```bash
 uvicorn app.main:app --reload
@@ -174,9 +195,16 @@ Open:
 - `http://127.0.0.1:8000/` for the interactive frontend
 - `http://127.0.0.1:8000/docs` for the API docs
 
+Run the Streamlit frontend:
 
+```bash
+streamlit run streamlit_app.py
+```
 
-## Run on a Mac
+Open:
+- `http://127.0.0.1:8501/` 
+
+## Run on a Mac without cloning
 
 If you download the repo zip instead of cloning it, this is the quickest path:
 
@@ -184,10 +212,13 @@ If you download the repo zip instead of cloning it, this is the quickest path:
 cd ~/Downloads
 unzip agentic_search.zip
 cd agentic_search
+
 python3 -m venv .venv
 source .venv/bin/activate
+
 pip install --upgrade pip
 pip install -r requirements.txt
+
 cp .env.example .env
 ```
 
@@ -209,150 +240,52 @@ Open:
 - `http://127.0.0.1:8000/` for the frontend
 - `http://127.0.0.1:8000/docs` for Swagger
 
-If `python3` is missing on your Mac, install it with Homebrew:
-
-```bash
-brew install python
-```
-
 ---
 
 ## Design decisions and trade-offs
 
-### 1. Flexible schema instead of fixed columns
-A fixed schema works poorly across very different queries like restaurants, startups, and open-source tools.
+The system is designed to balance flexibility, traceability, and efficiency. Key decisions and their trade-offs:
 
-I let the LLM infer the most useful columns for the query and return them in `inferred_columns`. This makes the system more general while still keeping results structured.
+### 1. Flexible schema (LLM-inferred columns)
+Instead of a fixed schema the system lets the LLM infer the most useful columns per query.  
+- Works well across diverse topics like restaurants, startups, or open-source tools.  
+- Columns are returned in `inferred_columns` for structured output.
 
-**Trade-off:** column consistency across unrelated queries is lower. If needed, the next version could add domain-specific templates.
+**Trade-off:** Column consistency across unrelated queries may vary. Domain-specific templates could improve this in future versions.
 
 ### 2. Per-cell provenance
-Rather than only citing sources at the row level, each field gets its own source object.
+Every field includes a source object with URL, title and evidence snippet.  
+- Supports traceability and transparency for each extracted value.  
 
-This is important because the challenge explicitly asks that each cell value be traceable.
+**Trade-off:** Increases response payload size but improves trust and debuggability.
 
-**Trade-off:** response payloads are larger, but trust and debuggability are much better.
+### 3. Async scraping with readability-lxml
+Pages are fetched asynchronously and HTML is cleaned to remove noise (navbars, ads, headers).  
+- Ensures faster scraping and cleaner input for extraction.
 
-### 3. Async scraping with readability extraction
-Raw HTML is noisy. Readability extraction removes nav bars, headers, and unrelated page furniture.
-
-**Trade-off:** some pages still render poorly, and heavily client-side sites may need browser-based rendering in a future version.
+**Trade-off:** Some dynamic or client-rendered pages may not be fully captured. Browser automation could improve this in future versions.
 
 ### 4. Single extraction pass
-The current system does one extraction pass after scraping.
+The pipeline performs one extraction pass after scraping.  
+- Keeps latency and API costs low.  
 
-**Trade-off:** this keeps latency and cost reasonable, but a stronger version would add:
-- query expansion,
-- re-ranking,
-- source quality scoring,
-- entity merge/reconciliation,
-- and a second verification pass.
-
----
-
-## What I would improve next
-
-If I were pushing this beyond the baseline, I would add:
-
-1. **Query planning / expansion**
-   - Generate multiple search angles from one user query.
-   - Example: for `AI startups in healthcare`, search startup lists, funding databases, company directories, and recent market maps.
-
-2. **Source scoring**
-   - Weight official websites, company about pages, GitHub repos, and high-quality directories more than generic SEO pages.
-
-3. **Entity reconciliation**
-   - Merge duplicate entities found under slightly different names.
-
-4. **Verification pass**
-   - Re-check weak cells against source text before returning results.
-
-5. **Rendered table frontend**
-   - Add a simple UI that shows the table and lets users expand each cell’s provenance.
-
-6. **Caching**
-   - Cache search results and scraped pages to improve latency and reduce cost.
+**Trade-off:** Limits advanced processing like query expansion, re-ranking, source scoring, entity reconciliation or verification. Future improvements could add these stages for higher quality output.
 
 ---
 
 ## Known limitations
 
 - Some pages block scraping or require JavaScript rendering.
-- The extraction quality depends on the quality of the retrieved sources.
+- Extraction quality depends on the sources retrieved.
 - No browser automation yet for dynamic websites.
-- No persistent cache/database yet.
-- No evaluation harness yet.
+- No persistent cache or database.
+- No evaluation harness included.
 
 ---
 
-## Why this should score well
+## Repo structure
 
-This submission aims to do more than the minimum:
-
-- **Structured output** instead of free-form summaries
-- **Per-cell traceability** instead of row-level citations only
-- **Async scraping** for better latency
-- **Generalizable schema inference** across different query types
-- **Clear separation of responsibilities** in the codebase
-- **Readable README with trade-offs and next steps**
-
-It is intentionally simple enough to run locally, but structured so it can be extended into a more serious retrieval and extraction system.
-
----
-
-## Submission notes
-
-Recommended email subject:
-
-```text
-CIIR challenge submission
-```
-
-In the email body, include:
-- GitHub repository link
-- optional live demo link
-- short summary of the approach
-
-
-
----
-
-## Frontend
-
-The homepage provides a minimal UI that lets you:
-- enter a topic query
-- set `max_entities` and an optional `entity_type_hint`
-- run the pipeline without using Swagger
-- inspect the rendered table, raw JSON, scraped URLs, and source provenance for each cell
-
-This makes the project easier to demo live during review.
-
-
-## Streamlit frontend
-
-This repo also includes a lightweight Streamlit UI in `streamlit_app.py`.
-
-Run the backend first:
-
-```bash
-python -m uvicorn app.main:app --reload
-```
-
-Then in a second terminal:
-
-```bash
-streamlit run streamlit_app.py
-```
-
-Open:
-- `http://127.0.0.1:8501/` for the Streamlit UI
-- `http://127.0.0.1:8000/` for the built-in FastAPI HTML demo
-- `http://127.0.0.1:8000/docs` for Swagger docs
-
-## Recommended repo structure
-
-```text
-agentic_search/
+```agentic_search/
 ├── app/
 │   ├── main.py
 │   ├── config.py
@@ -371,3 +304,4 @@ agentic_search/
 ├── requirements.txt
 └── README.md
 ```
+
