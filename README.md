@@ -45,7 +45,6 @@ The project includes **two ways to interact with it**:
 > API_URL=https://agentic-search-eexc.onrender.com/search
 > ```
 
-
 ## Why this approach
 
 The challenge is not just “search + summarize.” The goal is turning a fuzzy topic into a useful, structured entity table while keeping every cell traceable.
@@ -62,8 +61,8 @@ This approach balances recall, precision and traceability.
 
 ## Architecture
 
-```text
-User query
+```
+text User query
    ↓
 Brave Search API
    ↓
@@ -74,7 +73,7 @@ Async scraping + readability extraction
 OpenAI extraction pass
    ↓
 Structured entities + inferred columns + per-cell provenance
-
+```
 
 ### Components
 
